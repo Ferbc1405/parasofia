@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para Sofia ❤</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: #0b0b0b;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* Canvas fondo */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+/* Textos historia */
+.screen-text {
+    position: absolute;
+    width: 100%;
+    top: 45%;
+    text-align: center;
+    color: #ff9dbb;
+    font-size: clamp(1.5rem, 6vw, 2.3rem);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    z-index: 2;
+    padding: 0 15px;
+}
+
+.show { opacity: 1; }
+
+/* Corazón */
+.heart-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(85vw, 420px);
+    height: min(85vw, 420px);
+    opacity: 0;
+    animation: latido 1.4s infinite;
+    transition: opacity 2s ease;
+    z-index: 3;
+}
+
+.word {
+    position: absolute;
+    color: #ff2d75;
+    font-weight: bold;
+    font-size: clamp(0.7rem, 3.5vw, 1.1rem);
+    text-shadow: 0 0 8px #ff2d75, 0 0 18px #ff2d75;
+    white-space: nowrap;
+}
+
+.center-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(2rem, 9vw, 3.2rem);
+    color: white;
+    font-weight: 900;
+    text-shadow: 0 0 25px #ff2d75;
+}
+
+@keyframes latido {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.08); }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="stars"></canvas>
+<canvas id="hearts"></canvas>
+
+<div class="screen-text" id="t1">A veces alguien llega…</div>
+<div class="screen-text" id="t2">…sin hacer ruido</div>
+<div class="screen-text" id="t3">…y se queda en tu mente</div>
+
+<div class="heart-container" id="heart">
+    <div class="center-name">Sofia</div>
+</div>
+
+<script>
+// ================= HISTORIA =================
+const t1 = document.getElementById("t1");
+const t2 = document.getElementById("t2");
+const t3 = document.getElementById("t3");
+const heart = document.getElementById("heart");
+
+setTimeout(() => t1.classList.add("show"), 500);
+setTimeout(() => t1.classList.remove("show"), 3000);
+
+setTimeout(() => t2.classList.add("show"), 3500);
+setTimeout(() => t2.classList.remove("show"), 6000);
+
+setTimeout(() => t3.classList.add("show"), 6500);
+setTimeout(() => t3.classList.remove("show"), 9000);
+
+setTimeout(() => heart.style.opacity = 1, 9500);
+
+// ================= CORAZÓN =================
+const total = 34;
+const scale = 0.035 * Math.min(innerWidth, 420);
+
+for (let i = 0; i < total; i++) {
+    const t = (Math.PI * 2 / total) * i;
+    const x = 16 * Math.sin(t) ** 3;
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+
+    const span = document.createElement("span");
+    span.className = "word";
+    span.innerText = "Sofia";
+    span.style.left = `${50 + x * scale}%`;
+    span.style.top  = `${50 - y * scale}%`;
+    span.style.transform = `translate(-50%, -50%) rotate(${t * 57.3}deg)`;
+    heart.appendChild(span);
+}
+
+// ================= ESTRELLAS =================
+const starsCanvas = document.getElementById("stars");
+const sCtx = starsCanvas.getContext("2d");
+let stars = [];
+let starBoost = 0;
+
+function resizeStars() {
+    starsCanvas.width = innerWidth;
+    starsCanvas.height = innerHeight;
+    stars = Array.from({length: 120}, () => ({
+        x: Math.random() * innerWidth,
+        y: Math.random() * innerHeight,
+        r: Math.random() * 1.5,
+        a: Math.random()
+    }));
+}
+resizeStars();
+window.addEventListener("resize", resizeStars);
+
+function drawStars() {
+    sCtx.clearRect(0,0,innerWidth,innerHeight);
+    stars.forEach(s => {
+        const alpha = Math.min(1, s.a + starBoost);
+        sCtx.fillStyle = `rgba(255,255,255,${alpha})`;
+        sCtx.beginPath();
+        sCtx.arc(s.x, s.y, s.r + starBoost*2, 0, Math.PI*2);
+        sCtx.fill();
+        s.a += (Math.random() - 0.5) * 0.05;
+    });
+    starBoost *= 0.9;
+    requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// ⭐ Interacción
+function sparkle(x, y) {
+    for (let i = 0; i < 15; i++) {
+        stars.push({
+            x: x + (Math.random()-0.5)*40,
+            y: y + (Math.random()-0.5)*40,
+            r: Math.random()*2 + 1,
+            a: 1
+        });
+    }
+    starBoost = 0.6;
+}
+
+window.addEventListener("touchstart", e => {
+    const t = e.touches[0];
+    sparkle(t.clientX, t.clientY);
+});
+window.addEventListener("click", e => {
+    sparkle(e.clientX, e.clientY);
+});
+
+// ================= CORAZONES CAYENDO =================
+const heartsCanvas = document.getElementById("hearts");
+const hCtx = heartsCanvas.getContext("2d");
+let falling = [];
+
+function resizeHearts() {
+    heartsCanvas.width = innerWidth;
+    heartsCanvas.height = innerHeight;
+}
+resizeHearts();
+window.addEventListener("resize", resizeHearts);
+
+function createHeart() {
+    falling.push({
+        x: Math.random() * innerWidth,
+        y: -20,
+        s: Math.random() * 15 + 10,
+        v: Math.random() * 1 + 0.5,
+        a: Math.random() * 0.5 + 0.5
+    });
+}
+
+function drawHearts() {
+    hCtx.clearRect(0,0,innerWidth,innerHeight);
+    falling.forEach((h, i) => {
+        hCtx.globalAlpha = h.a;
+        hCtx.fillStyle = "#ff2d75";
+        hCtx.font = `${h.s}px Arial`;
+        hCtx.fillText("❤", h.x, h.y);
+        h.y += h.v;
+        if (h.y > innerHeight) falling.splice(i, 1);
+    });
+    requestAnimationFrame(drawHearts);
+}
+
+setInterval(createHeart, 350);
+drawHearts();
+</script>
+
+</body>
+</html>
